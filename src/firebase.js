@@ -1,15 +1,17 @@
 import firebase from "firebase/app"
 import "firebase/auth"
+import 'firebase/storage';
 
 const app = firebase.initializeApp({
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
+  apiKey: "AIzaSyCWg5SqMn4WzlsXAwAICOM4-1mP39S0V7w",
+  authDomain: "hackfest-atlassian.firebaseapp.com",
+  projectId: "hackfest-atlassian",
+  storageBucket: "hackfest-atlassian.appspot.com",
+  messagingSenderId: "92906433638",
+  appId: "1:92906433638:web:d13c651a114f29f9f111a7",
+  measurementId: "G-HGHEXLXQ0J"
 })
 
-export const auth = app.auth()
-export default app
+const auth = app.auth()
+const storage = app.storage()
+export {storage, auth, app as default}
