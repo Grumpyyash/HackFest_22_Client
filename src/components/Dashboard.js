@@ -3,6 +3,7 @@ import {storage} from '../firebase';
 import 'firebase/storage';
 import { Card, Button, Alert, Container, Form } from "react-bootstrap"
 import { useHistory } from "react-router-dom"
+import Banner from "./Banner"
 
 export default function Dashboard() {
   const [files, setFiles] = useState();
@@ -50,7 +51,7 @@ export default function Dashboard() {
 
   return (
     <>
-
+      <Banner />
       <Container
         className="d-flex align-items-center justify-content-center"
         style={{ minHeight: "100vh" }}
