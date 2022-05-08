@@ -108,8 +108,8 @@ known_names = [
     "Abhishek"
     "Elly",
     "Rishabh",
-    "rolli",
-    "Yash"
+    "Yash",
+    "Rishabh",
 ]
 
 
@@ -209,7 +209,7 @@ def get_present_ids(known_encodings, known_ids, frame):
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(
-            known_encodings, face_encoding, 0.5)
+            known_encodings, face_encoding, 0.4)
         id = "Unknown"
 
         # If a match was found in known_face_encodings, just use the first one.
