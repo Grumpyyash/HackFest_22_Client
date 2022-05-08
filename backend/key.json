@@ -1,9 +1,12 @@
 {
-  "apiKey": "AIzaSyCWg5SqMn4WzlsXAwAICOM4-1mP39S0V7w",
-  "authDomain": "hackfest-atlassian.firebaseapp.com",
-  "projectId": "hackfest-atlassian",
-  "storageBucket": "hackfest-atlassian.appspot.com",
-  "messagingSenderId": "92906433638",
-  "appId": "1:92906433638:web:d13c651a114f29f9f111a7",
-  "measurementId": "G-HGHEXLXQ0J"
+  "type": "service_account",
+  "project_id": "hackfest-atlassian",
+  "private_key_id": "6f86d542ebd1b05bd354812e31daf6418deef8c6",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQD5H2Z8tzb6Ucuj\nX7UW8z3sKq1gl8paTEnfrdm7MtRom8Mcu+pdHKZpFiVIQSnRcBrMZncF/4DzyXhw\ntYEKTzNWpzSYYDXyU36VR3OBzD/Vz5XDHbJBxoDBEz+g6npCh+Un9a5hZTB//rs7\n7ExxH19NzYitZQqg+ooJFOjhC5FqO9SQnxIsmAi4rxVSOaSL7G1ucOvTuq2MaShD\naGrSJ3q2IYk1wbjK6sH4VERIev5uJkCuSqhwEBODGgb+kSLLRQDlONOIcT91jaeZ\nIhkQZotFtlCbGKvR/5uSJTb3c/SOVCt4PmDG/i48hKhKemdFyaWFJtDh6gyatxVh\nAPM7ZGmNAgMBAAECggEAB+JAgg3iRYW1JhRvTKyh9wlat0XWd4kWhWehDlWLd0wG\nnrAruIqhkY3L3D+DrUcY8gMEHUJ6uDxV/WshDEx5WXKtLW1OB78wsFS0iRUHqCKL\noMMd0wsPJA0R5GvHNrfKPrt9q0Nih4puLnVJ7gKKJ5IrkyExduq215a7z/NnxK7U\nDSmfYBje2RsJvyCfU5Ij0cz8dRoQ9t99TIW7KtPCPqzaLxdn/LYB7puoVEeKQIj1\nerWMB1zYe7NEDfujG4UbGqcLCdl40jw+C613qUHZXuSrc+rH2yuFpLH2NGxN/FTz\nV1gTtg3URSOk2sfVIZtajZu/b5zLK7IA+K4QTotnmQKBgQD/IcQC/EQi5wy3p0vq\n+vYTBaNZOzClL2HUbhYahbDMsncwkJLXECpvyQ39Ds5zQDx828/YeQzEkiSu+jeW\n/kFr2zjQ53LF0Ipi7uMvxO9iCZsrBDLhoB72jUkpaerliPkm9KRRqJLAw7NfyV1M\n6+J0oZwJ+ZonnI/rgBYQKapS9wKBgQD5+GZ44ctDoYJqPMfl+nCghtI7Mcc/TG6+\nOyZo6pciPA/y8YPq2V0AZWOKIjzlB3/bj/I0U7oCGTp/HVJAnFrlTOHuRpP+P2tp\nNggwTYA3tU/u9apSt8FwaOOYPnmz2Uw+/CTqEqB2u7qSgwD4mYjeUR0KIkwYR9Io\nzoWM1oPCmwKBgGY+iecIYeX64kXXbb1FxcfpwoTIC76nNnWDiKgoW6os+0cjKTW2\n7MrPsCNyA5p8a8E99hWyrUM5rinRbOW+D0nCGQrfNkfAQzVStwk1yxlm8CBVFm8F\nVGNKS7+lCtXiBrdt40w2WlmWFBSXBiUFg0NqYLY+qWCmhabDNhRUHkYRAoGBAKiE\ns+COqE/h1F/2tfTvD3rJKXXKqz6bMpWAnvZgIJ9tynrII1zySOZ5c8+uIUtt8N5+\nfpSUVXQQugT0KX1xaz3mxPG0FxVyf+EgEgkuVmA4FblNWRQG2ZwEulrq03VR6zsT\nFXfQMumYycD4HHF8YG8wU9l/IbnEwYPNJu+5tn49AoGAWw0yyOfCxCQOZ1QvVbwv\nthm2YLJBj4JeLORio4899PxtZYcfso/hGGeVh85kMX9zPMSQKVXnlrExO7WVLmkS\n7CuXS9f7DBoJ9vvReOLQFVV5v05R97TupO95G53pFWG/v6FXOjLoU4c7iQiPrhvV\noeaZQm/9LqrEnohsb7AbGxU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-sjl45@hackfest-atlassian.iam.gserviceaccount.com",
+  "client_id": "109451477538063647403",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-sjl45%40hackfest-atlassian.iam.gserviceaccount.com"
 }
