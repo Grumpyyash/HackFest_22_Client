@@ -94,7 +94,15 @@ def getAllembeddings(urls):
     return embeds
 
 
-known_embeds = getAllembeddings(urls)
+# known_embeds = getAllembeddings(urls)
+
+
+# with open("embed", "wb") as fp:  # Pickling
+#     pickle.dump(known_embeds, fp)
+
+with open("embed", "rb") as fp:   # Unpickling
+    known_embeds = pickle.load(fp)
+
 known_names = [
     "Aayush",
     "Abhishek"
@@ -201,7 +209,7 @@ def get_present_ids(known_encodings, known_ids, frame):
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(
-            known_encodings, face_encoding, 0.56)
+            known_encodings, face_encoding, 0.5)
         id = "Unknown"
 
         # If a match was found in known_face_encodings, just use the first one.
