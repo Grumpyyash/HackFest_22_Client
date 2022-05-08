@@ -1,19 +1,12 @@
 from flask import Flask, request, jsonify
-# from requests import request
 from imutils import paths  # imutils includes opencv functions
 import face_recognition
 import pickle
-import cv2
 import os
-from firebase_admin import credentials, firestore, initialize_app
-
-import dlib
-import cv2
+from firebase_admin import credentials, firestore, initialize_app, db
 import numpy as np
 import argparse
-
 import glob
-
 from scipy.spatial import distance as dist
 from imutils.video import VideoStream
 from imutils import face_utils
@@ -22,15 +15,16 @@ import imutils
 import time
 import dlib
 import cv2
+import json
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app, support_credentials=True)
 
 # Initialize Firestore DB
 cred = credentials.Certificate('key.json')
-default_app = initialize_app(cred)
-db = firestore.client()
-todo_ref = db.collection('todos')
-
+default_app = initialize_app(cred, { 'databaseURL': "https://hackfest-atlassian-default-rtdb.firebaseio.com/"})
+ref = db.reference("/")
 
 # ====== CONSTANTS ======
 
@@ -201,8 +195,9 @@ def create():
         e.g. json={'id': '1', 'title': 'Write a blog post'}
     """
     try:
-        id = request.json['id']
-        todo_ref.document(id).set(request.json)
+        with open("book_info.json", "r") as f:
+            file_contents = json.load(f)
+        ref.set(file_contents)
         return jsonify({"success": True}), 200
     except Exception as e:
         return f"An Error Occured: {e}"
@@ -216,14 +211,9 @@ def read():
         all_todos : Return all documents
     """
     try:
-        # Check if ID was passed to URL query
-        todo_id = request.args.get('id')
-        if todo_id:
-            todo = todo_ref.document(todo_id).get()
-            return jsonify(todo.to_dict()), 200
-        else:
-            all_todos = [doc.to_dict() for doc in todo_ref.stream()]
-            return jsonify(all_todos), 200
+        ref = db.reference("/")
+        print(ref.get())
+        return jsonify(ref.get()), 200
     except Exception as e:
         return f"An Error Occured: {e}"
 
