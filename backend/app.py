@@ -5,8 +5,44 @@ import pickle
 import cv2
 import os
 
+import dlib
+import cv2
+import numpy as np
+import argparse
+
+import glob
+
+from scipy.spatial import distance as dist
+from imutils.video import VideoStream
+from imutils import face_utils
+import numpy as np
+import imutils
+import time
+import dlib
+import cv2
+
 app = Flask(__name__)
 
+
+# ====== CONSTANTS ======
+
+# define two constants, one for the eye aspect ratio to indicate
+# blink and then a second constant for the number of consecutive
+# frames the eye must be below the threshold
+EYE_AR_THRESH = 0.30
+EYE_AR_CONSEC_FRAMES = 45
+
+# initialize the frame counters and the total number of blinks
+COUNTER = 0
+ALARM_ON = False
+
+# grab the indexes of the facial landmarks for the left and
+# right eye, respectively
+(lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+(rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+
+
+# ========================
 
 # to create the embeddings
 def create_embedding(image_url):
@@ -20,53 +56,85 @@ def create_embedding(image_url):
     return embed
 
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+def ref3DModel():
+    modelPoints = [[0.0, 0.0, 0.0],
+                   [0.0, -330.0, -65.0],
+                   [-255.0, 170.0, -135.0],
+                   [225.0, 170.0, -135.0],
+                   [-150.0, -150.0, -125.0],
+                   [150.0, -150.0, -125.0]]
+    return np.array(modelPoints, dtype=np.float64)
 
-# Create arrays of known face encodings and their names
+
+def ref2DImagePoints(shape):
+    imagePoints = [[shape.part(30).x, shape.part(30).y],
+                   [shape.part(8).x, shape.part(8).y],
+                   [shape.part(36).x, shape.part(36).y],
+                   [shape.part(45).x, shape.part(45).y],
+                   [shape.part(48).x, shape.part(48).y],
+                   [shape.part(54).x, shape.part(54).y]]
+    return np.array(imagePoints, dtype=np.float64)
 
 
-@app.route("/attendance")
-def mark_attendance():
-    """ ####### TO DO #########
-    1) get all the embeddings  #array
-    2) get all the ids [in the same order] #array
+def get_calibrateCameraMatrix():
+    # termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    eg - 
+    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((6 * 7, 3), np.float32)
+    objp[:, :2] = np.mgrid[0: 7, 0: 6].T.reshape(-1, 2)
 
-    known_face_encodings = [
+    # Arrays to store object points and image points from all the images.
+    objpoints = []  # 3d point in real world space
+    imgpoints = []  # 2d points in image plane.
 
-        image_1_face_encoding,
-        image_2_face_encoding,
-        image_5_face_encoding,
-        image_4_face_encoding,
-        image_7_face_encoding,
-        image_3_face_encoding,
+    images = glob.glob('data/images/*.jpg')
 
-    ]
-    known_face_names = [
-        "Elly",
-        "Aayush",
-        "rolli",
-        "Abhishek",
-        "Rishabh",
-        "Yash"
-    ]
+    for image in images:
+        img = cv2.imread(image)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    """
+        ret, corners = cv2.findChessboardCorners(gray, (7, 6), None)
 
-    known_encodings = None
-    known_ids = None
+        if ret:
+            objpoints.append(objp)
 
-    frame = cv2.imread("./Images/input.png")
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            corners2 = cv2.cornerSubPix(
+                gray, corners, (11, 11), (-1, -1), criteria)
+            imgpoints.append(corners2)
 
-    face_locations, face_ids_present = get_present_ids(
-        known_encodings, known_ids, frame)
-    frame = get_mapped_ss(frame, face_locations, face_ids_present)
+            img = cv2.drawChessboardCorners(img, (7, 6), corners2, ret)
 
-    return face_ids_present
+            ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+                objpoints, imgpoints, gray.shape[::-1], None, None)
+
+    return mtx
+
+
+def get_attention_models():
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+    return detector, predictor
+
+
+def eye_aspect_ratio(eye):
+    # compute the euclidean distances between the two sets of
+    # vertical eye landmarks (x, y)-coordinates
+    A = dist.euclidean(eye[1], eye[5])
+    B = dist.euclidean(eye[2], eye[4])
+
+    # compute the euclidean distance between the horizontal
+    # eye landmark (x, y)-coordinates
+    C = dist.euclidean(eye[0], eye[3])
+
+    # compute the eye aspect ratio
+    ear = (A + B) / (2.0 * C)
+
+    # return the eye aspect ratio
+    return ear
+
+# ===== Attendance =====
 
 
 def get_present_ids(known_encodings, known_ids, frame):
@@ -112,6 +180,203 @@ def get_mapped_ss(frame, face_locations, face_ids_present):
 
     cv2.imwrite(f"output.jpg", frame)
     return frame
+
+# ====================
+
+
+detector, predictor = get_attention_models()
+mtx = get_calibrateCameraMatrix()
+
+
+@app.route("/")
+def hello_world():
+    return "<p>Hello, World!</p>"
+
+
+@app.route("/attendance")
+def mark_attendance():
+    """ ####### TO DO #########
+    1) get all the embeddings  #array
+    2) get all the ids [in the same order] #array
+
+    eg - 
+
+    known_face_encodings = [
+
+        image_1_face_encoding,
+        image_2_face_encoding,
+        image_5_face_encoding,
+        image_4_face_encoding,
+        image_7_face_encoding,
+        image_3_face_encoding,
+
+    ]
+    known_face_names = [
+        "Elly",
+        "Aayush",
+        "rolli",
+        "Abhishek",
+        "Rishabh",
+        "Yash"
+    ]
+
+    """
+
+    known_encodings = None
+    known_ids = None
+
+    frame = cv2.imread("./Images/input.png")
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    face_locations, face_ids_present = get_present_ids(
+        known_encodings, known_ids, frame)
+    frame = get_mapped_ss(frame, face_locations, face_ids_present)
+
+    return face_ids_present
+
+
+@app.route("/facealignment")
+def face_alignment():
+    """
+    Input:
+        Link - class recording
+    """
+    cap = cv2.VideoCapture('video.webm')
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = frame_count/fps
+
+    print(f"Duration of the recording- {duration} sec")
+    print(f"Total Frames count: {frame_count}")
+    print(f"Frames per sec: {fps}")
+
+    frame_cnt = 0
+    store = []
+    start_duration = 0
+
+    LST_GAZE = "Face Not Found"
+    while True:
+        GAZE = "Face Not Found"
+
+        ret, img = cap.read()
+
+        # if no frame found
+        if not ret:
+            break
+
+        faces = detector(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), 0)
+        face3Dmodel = ref3DModel()
+
+        for face in faces:
+            shape = predictor(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), face)
+            refImgPts = ref2DImagePoints(shape)
+            mdists = np.zeros((4, 1), dtype=np.float64)
+
+            success, rotationVector, translationVector = cv2.solvePnP(
+                face3Dmodel, refImgPts, mtx, mdists)
+
+            noseEndPoints3D = np.array([[0, 0, 1000.0]], dtype=np.float64)
+            noseEndPoint2D, jacobian = cv2.projectPoints(
+                noseEndPoints3D, rotationVector, translationVector, mtx, mdists)
+
+            rmat, jac = cv2.Rodrigues(rotationVector)
+            angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rmat)
+
+            if angles[1] < -15:
+                GAZE = "Looking: Left"
+            elif angles[1] > 15:
+                GAZE = "Looking: Right"
+            else:
+                GAZE = "Forward"
+
+            if GAZE != LST_GAZE:
+
+                if LST_GAZE != "Forward":
+                    store.append([LST_GAZE, frame_cnt/fps - start_duration])
+
+                start_duration = frame_cnt/fps
+                # print(GAZE, "starting time(sec):", start_duration ,  "sec")
+            LST_GAZE = GAZE
+
+        frame_cnt += 1
+    return store
+
+
+@app.route("/drowsiness")
+def get_drowsiness():
+    cap = cv2.VideoCapture('video.webm')
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = frame_count/fps
+
+    print(f"Duration of the recording- {duration} sec")
+    print(f"Total Frames count: {frame_count}")
+    print(f"Frames per sec: {fps}")
+
+    store = []
+    frame_cnt = 0
+    while True:
+        success, frame = cap.read()
+        if not success:
+            break
+
+        frame = imutils.resize(frame, width=500)
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # detect faces in the grayscale image
+        rects = detector(gray, 0)
+
+        # loop over the face detections
+        for rect in rects:
+            # determine the facial landmarks for the face region, then
+            # convert the facial landmark (x, y)-coordinates to a NumPy
+            # array
+            shape = predictor(gray, rect)
+            shape = face_utils.shape_to_np(shape)
+
+            # extract the left and right eye coordinates, then use the
+            # coordinates to compute the eye aspect ratio for both eyes
+            leftEye = shape[lStart:lEnd]
+            rightEye = shape[rStart:rEnd]
+            leftEAR = eye_aspect_ratio(leftEye)
+            rightEAR = eye_aspect_ratio(rightEye)
+
+            # average the eye aspect ratio together for both eyes
+            ear = (leftEAR + rightEAR) / 2.0
+
+            # check to see if the eye aspect ratio is below the blink
+            # threshold, and if so, increment the blink frame counter
+            if ear < EYE_AR_THRESH:
+                COUNTER += 1
+                if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                    # if the alarm is not on, turn it on
+                    if not ALARM_ON:
+                        ALARM_ON = True
+
+                        # check to see if an alarm file was supplied,
+                        # and if so, start a thread to have the alarm
+                        # sound played in the background
+
+                        store.append(["Drowsiness", frame_cnt/fps])
+
+                        # print("Drowsiness", "time(sec):", frame_cnt/fps,  "sec")
+
+                # otherwise, the eye aspect ratio is not below the blink
+                # threshold
+            else:
+
+                # reset the eye frame counter
+                COUNTER = 0
+                ALARM_ON = False
+        frame_cnt += 1
+
+    return store
+
+
+# Create arrays of known face encodings and their names
 
 
 app.run(port=5000)
