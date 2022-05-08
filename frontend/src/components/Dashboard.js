@@ -8,6 +8,7 @@ import Banner from "./Banner"
 export default function Dashboard() {
   const [files, setFiles] = useState();
   const [stud, setStud] = useState();
+  const [vid, setVid] = useState();
 
   useEffect(() => {
       const fetchImages = async () => {
@@ -42,6 +43,22 @@ export default function Dashboard() {
       };
       loadstud();
 
+      const getVideos = async () => {
+        let result = await storage.ref().child("images/videos").listAll();
+        let urlPromises = result.items.map((imageRef) =>
+          imageRef.getDownloadURL()
+        );
+
+        return Promise.all(urlPromises);
+      };
+
+      const loadVideos = async () => {
+        const urls = await getVideos();
+        setVid(urls);
+        console.log(urls);
+      };
+      loadVideos();
+
 
   }, []);
 
@@ -53,6 +70,8 @@ export default function Dashboard() {
   const [url, setURL] = useState("");
   const [studFile, setStudFile] = useState(null);
   const [studUrl, setStudUrl] = useState("");
+  const [video, setVideo] = useState(null);
+  const [videoURl, setVideoUrl] = useState("");
 
   function handleChange(e) {
     if (e.target.files[0])
@@ -79,6 +98,16 @@ export default function Dashboard() {
     setStudFile(null);
   }
 
+  async function handleVidUpload(e){
+    e.preventDefault();
+    const path = `/images/videos/${file.name}`;
+    const ref = storage.ref(path);
+    await ref.put(file);
+    const url = await ref.getDownloadURL()
+    setVideoUrl(url);
+    setVideo(null);
+  }
+
   return (
     <>
       <Banner />
@@ -102,11 +131,12 @@ export default function Dashboard() {
         </Card.Body>
       </Card>
 
-      <Card>
+      <Card style={{marginBottom: "4rem"}}>
         <Card.Body>
-          <h2 className="text-center mb-4">Upload Photo</h2>
+          <h2 className="text-center mb-4">Upload Snapshot</h2>
           {error && <Alert variant="danger">{error}</Alert>}
           <Form onSubmit={handleUpload}>
+            <p>Upload snapshots of the class</p>
             <input type="file" onChange={handleChange} />
             <Button disabled={!file} className="w-100" type="submit">
               Upload to Firebase
@@ -114,10 +144,24 @@ export default function Dashboard() {
           </Form>
         </Card.Body>
       </Card>
+
+      <Card>
+        <Card.Body>
+          <h2 className="text-center mb-4">Upload Video</h2>
+          {error && <Alert variant="danger">{error}</Alert>}
+          <Form onSubmit={handleVidUpload}>
+            <p>Upload a class recording</p>
+            <input type="file" onChange={handleChange} />
+            <Button className="w-100" type="submit">
+              Upload to Firebase
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
       </div>
     </Container>
-      <div style={{margin: "auto", textAlign: "center", marginBottom: "8rem"}}>
-        <p>All Your Students</p>
+      <div style={{margin: "auto", textAlign: "center", marginBottom: "8rem", marginTop: "3rem"}}>
+        <h3>All Your Students</h3>
         <Row>
           {stud ? stud.map((img) => (
             <Col md={3}><img src={img} style={{width: "150px", height: "150px", textAlign: "center", margin: "auto"}} /></Col>
@@ -125,11 +169,25 @@ export default function Dashboard() {
         </Row>  
       </div>
 
-      <div style={{margin: "auto", textAlign: "center"}}>
-        <p>All Your Attendence Screenshots</p>
+      <div style={{margin: "auto", textAlign: "center", marginTop: "3rem"}}>
+        <h3>All Your Attendence Screenshots</h3>
         {files ? files.map((img) => (
           <img src={img} style={{maxWidth: "400px", textAlign: "center", margin: "auto"}} />
         )) : null}
+      </div>
+
+      <div style={{margin: "auto", textAlign: "center", marginTop: "3rem", marginBottom: "4rem"}}>
+        <h3>All Your Class Recordings</h3>
+        <table style={{textAlign: "center"}}>
+          <tr>
+            <th>Video Link</th>
+          </tr>
+          <tr>
+            {vid ? vid.map((data) => (
+              <td><a href={data}>{data}</a></td>
+            )) : null}
+          </tr>
+        </table>
       </div>
     </>
   )
