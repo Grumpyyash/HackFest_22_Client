@@ -1,3 +1,4 @@
+from crypt import methods
 from flask import Flask, request, jsonify
 from imutils import paths  # imutils includes opencv functions
 import face_recognition
@@ -77,7 +78,7 @@ def create_embedding(image_url):
     # Find all the faces and face encodings in the current frame of video
     face_locations = face_recognition.face_locations(rgb_small_frame)
     embed = face_recognition.face_encodings(
-        rgb_small_frame, face_locations)
+        rgb_small_frame, face_locations)[0]
 
     # im = face_recognition.load_image_file(image_url)
     # embed = face_recognition.face_encodings(im)[0]
@@ -99,7 +100,7 @@ known_names = [
     "Abhishek"
     "Elly",
     "Rishabh",
-    "rolli"
+    "rolli",
     "Yash"
 ]
 
@@ -204,6 +205,7 @@ def get_present_ids(known_encodings, known_ids, frame):
         id = "Unknown"
 
         # If a match was found in known_face_encodings, just use the first one.
+
         if True in matches:
             first_match_index = matches.index(True)
             id = known_ids[first_match_index]
@@ -301,7 +303,7 @@ def hello_world():
     return "<p>Hello, World!</p>"
 
 
-@app.route("/attendance")
+@app.route("/attendance", methods=["POST"])
 def mark_attendance():
     """ ####### TO DO #########
     1) get all the embeddings  #array
@@ -329,23 +331,29 @@ def mark_attendance():
     ]
 
     """
+    try:
+        print("url is", request.json['url'])
 
-    known_encodings = known_embeds
-    known_ids = known_names
+        known_encodings = known_embeds
+        known_ids = known_names
 
-    # frame = cv2.imread("./Images/input.png")
-    resp = urlopen(image_url)
-    image = np.asarray(bytearray(resp.read()), dtype="uint8")
-    frame = cv2.imdecode(image, cv2.IMREAD_COLOR)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # frame = cv2.imread("./Images/input.png")
+        resp = urlopen(request.json["url"])
+        image = np.asarray(bytearray(resp.read()), dtype="uint8")
+        frame = cv2.imdecode(image, cv2.IMREAD_COLOR)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    face_locations, face_ids_present = get_present_ids(
-        known_encodings, known_ids, frame)
-    frame = get_mapped_ss(frame, face_locations, face_ids_present)
+        face_locations, face_ids_present = get_present_ids(
+            known_encodings, known_ids, frame)
 
-    return face_ids_present
+        frame = get_mapped_ss(frame, face_locations, face_ids_present)
+
+        return jsonify({"present_students": face_ids_present})
+
+    except Exception as e:
+        return f"An Error Occured: {e}"
 
 
 @app.route("/facealignment", methods=["POST"])
