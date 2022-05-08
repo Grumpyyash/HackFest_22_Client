@@ -100,16 +100,57 @@ def getAllembeddings(urls):
 # with open("embed", "wb") as fp:  # Pickling
 #     pickle.dump(known_embeds, fp)
 
-with open("embed", "rb") as fp:   # Unpickling
-    known_embeds = pickle.load(fp)
+# with open("embed", "rb") as fp:   # Unpickling
+#     known_embeds = pickle.load(fp)
 
+# known_names = [
+#     "Aayush",
+#     "Abhishek"
+#     "Elly",
+#     "Rishabh",
+#     "Yash",
+#     "Rishabh",
+# ]
+
+# Load images.
+
+image_1 = face_recognition.load_image_file("./Images/Elly.jpg")
+image_1_face_encoding = face_recognition.face_encodings(image_1)[0]
+
+image_2 = face_recognition.load_image_file("./Images/Aayush.jpg")
+image_2_face_encoding = face_recognition.face_encodings(image_2)[0]
+
+image_4 = face_recognition.load_image_file("./Images/Abhishek.jpg")
+image_4_face_encoding = face_recognition.face_encodings(image_4)[0]
+
+image_5 = face_recognition.load_image_file("./Images/rolli.jpg")
+image_5_face_encoding = face_recognition.face_encodings(image_5)[0]
+
+image_7 = face_recognition.load_image_file("./Images/Rishabh.jpg")
+image_7_face_encoding = face_recognition.face_encodings(image_7)[0]
+
+image_3 = face_recognition.load_image_file("./Images/Yash.jpg")
+image_3_face_encoding = face_recognition.face_encodings(image_3)[0]
+
+
+# Create arrays of known face encodings and their names
+known_embeds = [
+
+    image_1_face_encoding,
+    image_2_face_encoding,
+    image_5_face_encoding,
+    image_4_face_encoding,
+    image_7_face_encoding,
+    image_3_face_encoding,
+
+]
 known_names = [
-    "Aayush",
-    "Abhishek"
     "Elly",
+    "Aayush",
+    "rolli",
+    "Abhishek",
     "Rishabh",
-    "Yash",
-    "Rishabh",
+    "Yash"
 ]
 
 
