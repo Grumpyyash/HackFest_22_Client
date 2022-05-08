@@ -41,7 +41,6 @@ EYE_AR_THRESH = 0.30
 EYE_AR_CONSEC_FRAMES = 45
 
 
-
 # grab the indexes of the facial landmarks for the left and
 # right eye, respectively
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
@@ -319,7 +318,7 @@ def face_alignment():
 
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = frame_count/fps
+        duration = round(frame_count/fps, 5)
 
         print(f"Duration of the recording- {duration} sec")
         print(f"Total Frames count: {frame_count}")
@@ -327,7 +326,7 @@ def face_alignment():
 
         frame_cnt = 0
         store = []
-        start_duration = 0
+        start_time = 0
 
         LST_GAZE = "Face Not Found"
         while True:
@@ -366,16 +365,20 @@ def face_alignment():
 
                 if GAZE != LST_GAZE:
 
-                    if LST_GAZE != "Forward":
-                        store.append(
-                            [LST_GAZE, frame_cnt/fps - start_duration])
+                    if LST_GAZE != "Forward" and LST_GAZE != "Face Not Found":
+                        duration = round(frame_cnt/fps - start_time, 5)
 
-                    start_duration = frame_cnt/fps
-                    # print(GAZE, "starting time(sec):", start_duration ,  "sec")
+                        # threshold duration
+                        if duration > 0.5:
+                            store.append({"Gaze type": LST_GAZE, "start_time": start_time,
+                                          "duration": duration})
+
+                    start_time = round(frame_cnt/fps, 5)
+
                 LST_GAZE = GAZE
 
             frame_cnt += 1
-        return jsonify({"drowsiness_alerts": store})
+        return jsonify({"boredom_alerts": store})
     except Exception as e:
         return f"An Error Occured: {e}"
 
@@ -394,7 +397,7 @@ def get_drowsiness():
 
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = frame_count/fps
+        duration = round(frame_count/fps, 5)
 
         print(f"Duration of the recording- {duration} sec")
         print(f"Total Frames count: {frame_count}")
@@ -440,18 +443,18 @@ def get_drowsiness():
                         # if the alarm is not on, turn it on
                         if not ALARM_ON:
                             ALARM_ON = True
-
-                            # check to see if an alarm file was supplied,
-                            # and if so, start a thread to have the alarm
-                            # sound played in the background
-
-                            store.append(["Drowsiness", frame_cnt/fps])
-
-                            # print("Drowsiness", "time(sec):", frame_cnt/fps,  "sec")
+                            start_time = round(frame_cnt/fps, 5)
 
                     # otherwise, the eye aspect ratio is not below the blink
                     # threshold
                 else:
+
+                    if ALARM_ON:
+                        duration = round(frame_cnt/fps-start_time, 5)
+
+                        if duration > 0.4:
+                            store.append({"start_time": start_time,
+                                          "duration": duration})
 
                     # reset the eye frame counter
                     COUNTER = 0
