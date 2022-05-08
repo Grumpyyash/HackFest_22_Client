@@ -18,12 +18,15 @@ import cv2
 import json
 from flask_cors import CORS, cross_origin
 
+from urllib.request import urlopen
+
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 
 # Initialize Firestore DB
 cred = credentials.Certificate('key.json')
-default_app = initialize_app(cred, { 'databaseURL': "https://hackfest-atlassian-default-rtdb.firebaseio.com/"})
+default_app = initialize_app(
+    cred, {'databaseURL': "https://hackfest-atlassian-default-rtdb.firebaseio.com/"})
 ref = db.reference("/")
 
 # ====== CONSTANTS ======
@@ -40,6 +43,15 @@ EYE_AR_CONSEC_FRAMES = 45
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
+urls = [
+    "https://firebasestorage.googleapis.com/v0/b/hackfest-atlassian.appspot.com/o/images%2Fstudents%2FAayush.jpg?alt=media&token=f4e0f129-e3a8-41b7-8898-810db20bc33f",
+    "https://firebasestorage.googleapis.com/v0/b/hackfest-atlassian.appspot.com/o/images%2Fstudents%2FAbhishek.jpg?alt=media&token=3fd755f8-9c38-4995-82f2-5a077f8e1597",
+    "https://firebasestorage.googleapis.com/v0/b/hackfest-atlassian.appspot.com/o/images%2Fstudents%2FElly.jpg?alt=media&token=e02007f1-0f2c-448e-96c4-8b0846b687b9",
+    "https://firebasestorage.googleapis.com/v0/b/hackfest-atlassian.appspot.com/o/images%2Fstudents%2FRishabh.jpg?alt=media&token=6a91b76d-1b76-4976-9812-e95121ad2e5f",
+    "https://firebasestorage.googleapis.com/v0/b/hackfest-atlassian.appspot.com/o/images%2Fstudents%2FYash.jpg?alt=media&token=84752eae-3232-4f4e-8c02-50e88b646f86",
+    "https://firebasestorage.googleapis.com/v0/b/hackfest-atlassian.appspot.com/o/images%2Fstudents%2Frolli.jpg?alt=media&token=5820a462-42a3-4692-854f-422c1fe19a5d"
+]
+
 
 # ========================
 
@@ -50,9 +62,46 @@ def create_embedding(image_url):
     later use them to recognize
     """
 
-    im = face_recognition.load_image_file(image_url)
-    embed = face_recognition.face_encodings(im)[0]
+    # download the image, convert it to a NumPy array, and then read
+    # it into OpenCV format
+    resp = urlopen(image_url)
+    image = np.asarray(bytearray(resp.read()), dtype="uint8")
+    frame = cv2.imdecode(image, cv2.IMREAD_COLOR)
+
+    # # Resize frame of video to 1/4 size for faster face recognition processing
+    # small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+
+    # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
+    rgb_small_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Find all the faces and face encodings in the current frame of video
+    face_locations = face_recognition.face_locations(rgb_small_frame)
+    embed = face_recognition.face_encodings(
+        rgb_small_frame, face_locations)
+
+    # im = face_recognition.load_image_file(image_url)
+    # embed = face_recognition.face_encodings(im)[0]
     return embed
+
+
+def getAllembeddings(urls):
+    embeds = []
+
+    for url in urls:
+        embeds.append(create_embedding(url))
+
+    return embeds
+
+
+known_embeds = getAllembeddings(urls)
+known_names = [
+    "Aayush",
+    "Abhishek"
+    "Elly",
+    "Rishabh",
+    "rolli"
+    "Yash"
+]
 
 
 def ref3DModel():
@@ -281,11 +330,16 @@ def mark_attendance():
 
     """
 
-    known_encodings = None
-    known_ids = None
+    known_encodings = known_embeds
+    known_ids = known_names
 
-    frame = cv2.imread("./Images/input.png")
+    # frame = cv2.imread("./Images/input.png")
+    resp = urlopen(image_url)
+    image = np.asarray(bytearray(resp.read()), dtype="uint8")
+    frame = cv2.imdecode(image, cv2.IMREAD_COLOR)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     face_locations, face_ids_present = get_present_ids(
         known_encodings, known_ids, frame)
@@ -359,7 +413,7 @@ def face_alignment():
                         duration = round(frame_cnt/fps - start_time, 5)
 
                         # threshold duration
-                        if duration > 0.5:
+                        if duration > 0.8:
                             store.append({"Gaze type": LST_GAZE, "start_time": start_time,
                                           "duration": duration})
 
@@ -442,7 +496,7 @@ def get_drowsiness():
                     if ALARM_ON:
                         duration = round(frame_cnt/fps-start_time, 5)
 
-                        if duration > 0.4:
+                        if duration > 1:  # more than 1 sec -
                             store.append({"start_time": start_time,
                                           "duration": duration})
 
